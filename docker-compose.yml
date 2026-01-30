@@ -1,0 +1,9 @@
+services:
+  mcp-server:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - INVOICE_URL=https://invoice.etax.nat.gov.tw/index.html
+    volumes:
+      - ./src:/app/src
