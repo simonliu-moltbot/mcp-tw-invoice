@@ -24,7 +24,7 @@ python src/server.py --mode stdio
 ```bash
 python src/server.py --mode http --port 8000
 ```
-- **服務 URL**: `http://localhost:8000/sse`
+- **服務 URL**: `http://localhost:8000/mcp`
 
 ---
 
@@ -60,7 +60,7 @@ docker run -p 8000:8000 mcp-tw-invoice
 
 ### Dive / HTTP 客戶端
 - **Type**: `http` (或 `sse`)
-- **URL**: `http://localhost:8000/sse`
+- **URL**: `http://localhost:8000/mcp`
 
 ---
 

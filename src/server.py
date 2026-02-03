@@ -101,7 +101,8 @@ async def run_http(port: int):
     from mcp.server.models import InitializationOptions
     import mcp.types as types
 
-    sse = SseServerTransport("/messages")
+    # Use /mcp/messages as the sub-path for posting messages
+    sse = SseServerTransport("/mcp/messages")
 
     async def handle_sse(request):
         async with sse.connect_sse(request.scope, request.receive, request.send) as (read, write):
@@ -121,8 +122,8 @@ async def run_http(port: int):
     app = Starlette(
         debug=True,
         routes=[
-            Route("/sse", endpoint=handle_sse),
-            Mount("/messages", app=sse.handle_post_message),
+            Route("/mcp", endpoint=handle_sse),
+            Mount("/mcp/messages", app=sse.handle_post_message),
         ],
         middleware=[
             Middleware(
