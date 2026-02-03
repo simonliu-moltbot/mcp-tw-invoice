@@ -106,7 +106,7 @@ async def run_http(port: int):
         debug=True,
         routes=[
             Route("/mcp", endpoint=handle_sse),
-            Mount("/mcp/", app=sse.handle_post_messages),
+            Mount("/mcp/", app=sse.handle_post_message),
         ],
     )
     
