@@ -100,7 +100,8 @@ async def run_http(port: int):
     """Run the server using HTTP SSE (for Docker/Remote)."""
     from mcp.server.models import InitializationOptions
 
-    sse = SseServerTransport("/mcp/messages")
+    # Configure SseServerTransport to use /mcp as the message endpoint
+    sse = SseServerTransport("/mcp")
 
     async def handle_sse(request):
         async with sse.connect_sse(request.scope, request.receive, request.send) as (read, write):
@@ -123,8 +124,8 @@ async def run_http(port: int):
     app = Starlette(
         debug=True,
         routes=[
-            Route("/mcp", endpoint=handle_sse),
-            Route("/mcp/messages", endpoint=handle_messages, methods=["POST"]),
+            Route("/mcp", endpoint=handle_sse, methods=["GET"]),
+            Route("/mcp", endpoint=handle_messages, methods=["POST"]),
         ],
         middleware=[
             Middleware(
