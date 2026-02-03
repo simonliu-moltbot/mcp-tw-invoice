@@ -1,18 +1,21 @@
 """
-Standard MCP Server for Taiwan Invoice Lottery.
-Uses official 'mcp' SDK to avoid stdout pollution.
+Taiwan Invoice Lottery MCP Server.
+Supports both STDIO and HTTP (SSE) transport modes.
 """
 import sys
 import os
+import asyncio
+import argparse
 
 # Add current directory to sys.path so we can import logic
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-import asyncio
-import json
-from mcp.server import Server, NotificationOptions
+from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
+from mcp.server.sse import SseServerTransport
+from starlette.applications import Starlette
+from starlette.routing import Mount, Route
+import uvicorn
 import mcp.types as types
 from logic import fetch_winning_numbers, check_number
 
@@ -81,8 +84,8 @@ async def handle_call_tool(
 
     raise ValueError(f"Unknown tool: {name}")
 
-async def main():
-    # Run the server using stdin/stdout
+async def run_stdio():
+    """Run the server using stdin/stdout (for Claude Desktop)."""
     async with stdio_server() as (read_stream, write_stream):
         await server.run(
             read_stream,
@@ -90,6 +93,43 @@ async def main():
             server.create_initialization_options(),
             raise_exceptions=True,
         )
+
+async def run_http(port: int):
+    """Run the server using HTTP SSE (for Docker/Remote)."""
+    sse = SseServerTransport("/mcp")
+
+    async def handle_sse(request):
+        async with sse.connect_sse(request.scope, request.receive, request._send) as (read, write):
+            await server.run(read, write, server.create_initialization_options())
+
+    app = Starlette(
+        debug=True,
+        routes=[
+            Route("/mcp", endpoint=handle_sse),
+            Mount("/mcp/", app=sse.handle_post_messages),
+        ],
+    )
+    
+    # Force logs to stderr to avoid polluting stdout
+    config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info", log_config=None)
+    # Standard uvicorn logging config sends everything to stdout by default. 
+    # We pass log_config=None and handle it manually if needed, but 'info' level usually goes to stderr in many environments.
+    # To be safe, we rely on the fact that when mode is 'http', stdout doesn't matter much.
+    
+    server_http = uvicorn.Server(config)
+    await server_http.serve()
+
+async def main():
+    parser = argparse.ArgumentParser(description="Taiwan Invoice MCP Server")
+    parser.add_argument("--mode", choices=["stdio", "http"], default="stdio", help="Transport mode")
+    parser.add_argument("--port", type=int, default=8000, help="HTTP port (only for http mode)")
+    args = parser.parse_args()
+
+    if args.mode == "stdio":
+        await run_stdio()
+    else:
+        print(f"Starting HTTP server on port {args.port}...", file=sys.stderr)
+        await run_http(args.port)
 
 if __name__ == "__main__":
     asyncio.run(main())

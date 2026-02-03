@@ -1,0 +1,26 @@
+
+
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│                                                                              │
+│                         ▄▀▀ ▄▀█ █▀▀ ▀█▀ █▀▄▀█ █▀▀ █▀█                        │
+│                         █▀  █▀█ ▄▄█  █  █ ▀ █ █▄▄ █▀▀                        │
+│                                                                              │
+│                                                                              │
+│                                FastMCP 2.14.4                                │
+│                            https://gofastmcp.com                             │
+│                                                                              │
+│                    🖥  Server:      Taiwan Invoice Helper                     │
+│                    🚀 Deploy free: https://fastmcp.cloud                     │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                          ✨ FastMCP 3.0 is coming!                           │
+│       Pin `fastmcp < 3` in production, then upgrade when you're ready.       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+[01/31/26 00:27:16] INFO     Starting MCP server 'Taiwan Invoice  server.py:2506
+                             Helper' with transport 'stdio'                     
+                    DEBUG    Sending INFO to client: Checking    context.py:1044
+                             invoice number: 06538249                           
