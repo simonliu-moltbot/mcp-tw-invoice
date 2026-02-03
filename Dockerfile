@@ -9,10 +9,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy all files first so that build backends (like hatchling) can see the package structure
+# Copy all files
 COPY . .
 
-# Install dependencies and the project itself
+# Install dependencies and the project
 RUN pip install --no-cache-dir .
 
 # Set environment variables
@@ -21,5 +21,5 @@ ENV PYTHONUNBUFFERED=1
 # Expose the HTTP port
 EXPOSE 8000
 
-# Run the server in HTTP mode by default
+# Run FastMCP in streamable-http mode by default for Docker
 CMD ["python", "src/server.py", "--mode", "http", "--port", "8000"]
