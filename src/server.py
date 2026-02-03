@@ -98,17 +98,31 @@ async def run_stdio():
 
 async def run_http(port: int):
     """Run the server using HTTP SSE (for Docker/Remote)."""
-    sse = SseServerTransport("/mcp")
+    from mcp.server.models import InitializationOptions
+    import mcp.types as types
+
+    sse = SseServerTransport("/messages")
 
     async def handle_sse(request):
         async with sse.connect_sse(request.scope, request.receive, request.send) as (read, write):
-            await server.run(read, write, server.create_initialization_options())
+            await server.run(
+                read, 
+                write, 
+                InitializationOptions(
+                    server_name="mcp-tw-invoice",
+                    server_version="0.1.0",
+                    capabilities=server.get_capabilities(
+                        notification_options=NotificationOptions(),
+                        experimental_capabilities={},
+                    ),
+                )
+            )
 
     app = Starlette(
         debug=True,
         routes=[
-            Route("/mcp", endpoint=handle_sse),
-            Mount("/mcp/", app=sse.handle_post_message),
+            Route("/sse", endpoint=handle_sse),
+            Mount("/messages", app=sse.handle_post_message),
         ],
         middleware=[
             Middleware(
@@ -121,12 +135,7 @@ async def run_http(port: int):
         ]
     )
     
-    # Force logs to stderr to avoid polluting stdout
-    config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info", log_config=None)
-    # Standard uvicorn logging config sends everything to stdout by default. 
-    # We pass log_config=None and handle it manually if needed, but 'info' level usually goes to stderr in many environments.
-    # To be safe, we rely on the fact that when mode is 'http', stdout doesn't matter much.
-    
+    config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info")
     server_http = uvicorn.Server(config)
     await server_http.serve()
 
