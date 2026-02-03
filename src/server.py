@@ -10,11 +10,11 @@ import argparse
 # Add current directory to sys.path so we can import logic
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from mcp.server import Server
+from mcp.server import Server, NotificationOptions
 from mcp.server.stdio import stdio_server
 from mcp.server.sse import SseServerTransport
 from starlette.applications import Starlette
-from starlette.routing import Mount, Route
+from starlette.routing import Route
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
@@ -99,10 +99,7 @@ async def run_stdio():
 async def run_http(port: int):
     """Run the server using HTTP SSE (for Docker/Remote)."""
     from mcp.server.models import InitializationOptions
-    import mcp.types as types
 
-    # SseServerTransport needs a path where it will receive POST messages.
-    # We'll use /mcp/messages for this.
     sse = SseServerTransport("/mcp/messages")
 
     async def handle_sse(request):
@@ -120,14 +117,14 @@ async def run_http(port: int):
                 )
             )
 
-    async def handle_post(request):
+    async def handle_messages(request):
         await sse.handle_post_message(request.scope, request.receive, request.send)
 
     app = Starlette(
         debug=True,
         routes=[
-            Route("/mcp", endpoint=handle_sse, methods=["GET"]),
-            Route("/mcp/messages", endpoint=handle_post, methods=["POST"]),
+            Route("/mcp", endpoint=handle_sse),
+            Route("/mcp/messages", endpoint=handle_messages, methods=["POST"]),
         ],
         middleware=[
             Middleware(
