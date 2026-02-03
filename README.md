@@ -25,6 +25,7 @@ python src/server.py --mode stdio
 python src/server.py --mode http --port 8000
 ```
 - **服務 URL**: `http://localhost:8000/mcp`
+- **備註**: 客戶端對此網址進行 GET 以建立 SSE 串流，並對同一網址進行 POST 以發送訊息。
 
 ---
 
