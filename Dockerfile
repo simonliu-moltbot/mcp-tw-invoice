@@ -9,12 +9,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY pyproject.toml .
-RUN pip install --no-cache-dir .
+# Copy all files first so that build backends (like hatchling) can see the package structure
+COPY . .
 
-# Copy source code
-COPY src/ src/
+# Install dependencies and the project itself
+RUN pip install --no-cache-dir .
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
