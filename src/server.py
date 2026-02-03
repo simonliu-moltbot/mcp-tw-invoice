@@ -120,12 +120,14 @@ async def run_http(port: int):
                 )
             )
 
+    async def handle_post(request):
+        await sse.handle_post_message(request.scope, request.receive, request.send)
+
     app = Starlette(
         debug=True,
         routes=[
             Route("/mcp", endpoint=handle_sse, methods=["GET"]),
-            # This handles the POST requests from the client to the address provided in the SSE stream
-            Mount("/mcp/messages", app=sse.handle_post_message),
+            Route("/mcp/messages", endpoint=handle_post, methods=["POST"]),
         ],
         middleware=[
             Middleware(
