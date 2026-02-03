@@ -101,7 +101,7 @@ async def run_http(port: int):
     from mcp.server.models import InitializationOptions
     import mcp.types as types
 
-    # Set the message endpoint to the same URL as the SSE endpoint
+    # The argument to SseServerTransport is the URL where POST messages will be sent.
     sse = SseServerTransport("/mcp")
 
     async def handle_sse(request):
@@ -119,12 +119,19 @@ async def run_http(port: int):
                 )
             )
 
+    async def mcp_handler(request):
+        if request.method == "GET":
+            await handle_sse(request)
+        elif request.method == "POST":
+            await sse.handle_post_message(request.scope, request.receive, request.send)
+        else:
+            from starlette.responses import Response
+            return Response(status_code=405)
+
     app = Starlette(
         debug=True,
         routes=[
-            # Standard MCP client may try to POST to the same URL
-            Route("/mcp", endpoint=handle_sse, methods=["GET"]),
-            Route("/mcp", endpoint=sse.handle_post_message, methods=["POST"]),
+            Route("/mcp", endpoint=mcp_handler, methods=["GET", "POST"]),
         ],
         middleware=[
             Middleware(
