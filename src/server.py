@@ -15,6 +15,8 @@ from mcp.server.stdio import stdio_server
 from mcp.server.sse import SseServerTransport
 from starlette.applications import Starlette
 from starlette.routing import Mount, Route
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 import mcp.types as types
 from logic import fetch_winning_numbers, check_number
@@ -99,7 +101,7 @@ async def run_http(port: int):
     sse = SseServerTransport("/mcp")
 
     async def handle_sse(request):
-        async with sse.connect_sse(request.scope, request.receive, request._send) as (read, write):
+        async with sse.connect_sse(request.scope, request.receive, request.send) as (read, write):
             await server.run(read, write, server.create_initialization_options())
 
     app = Starlette(
@@ -108,6 +110,15 @@ async def run_http(port: int):
             Route("/mcp", endpoint=handle_sse),
             Mount("/mcp/", app=sse.handle_post_message),
         ],
+        middleware=[
+            Middleware(
+                CORSMiddleware,
+                allow_origins=["*"],
+                allow_methods=["GET", "POST", "OPTIONS"],
+                allow_headers=["*"],
+                expose_headers=["*"],
+            )
+        ]
     )
     
     # Force logs to stderr to avoid polluting stdout
