@@ -101,8 +101,9 @@ async def run_http(port: int):
     from mcp.server.models import InitializationOptions
     import mcp.types as types
 
-    # The argument to SseServerTransport is the URL where POST messages will be sent.
-    sse = SseServerTransport("/mcp")
+    # SseServerTransport needs a path where it will receive POST messages.
+    # We'll use /mcp/messages for this.
+    sse = SseServerTransport("/mcp/messages")
 
     async def handle_sse(request):
         async with sse.connect_sse(request.scope, request.receive, request.send) as (read, write):
@@ -119,19 +120,12 @@ async def run_http(port: int):
                 )
             )
 
-    async def mcp_handler(request):
-        if request.method == "GET":
-            await handle_sse(request)
-        elif request.method == "POST":
-            await sse.handle_post_message(request.scope, request.receive, request.send)
-        else:
-            from starlette.responses import Response
-            return Response(status_code=405)
-
     app = Starlette(
         debug=True,
         routes=[
-            Route("/mcp", endpoint=mcp_handler, methods=["GET", "POST"]),
+            Route("/mcp", endpoint=handle_sse, methods=["GET"]),
+            # This handles the POST requests from the client to the address provided in the SSE stream
+            Mount("/mcp/messages", app=sse.handle_post_message),
         ],
         middleware=[
             Middleware(
